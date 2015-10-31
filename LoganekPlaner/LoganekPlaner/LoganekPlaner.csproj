@@ -45,11 +45,11 @@
     <Compile Include="MainWindow.cs" />
     <Compile Include="Task.cs" />
     <Compile Include="TaskManager.cs" />
-    <Compile Include="MainWindow_TaskEditor.cs" />
     <Compile Include="MainWindow_TaskTree.cs" />
     <Compile Include="UiUtils.cs" />
     <Compile Include="IDataStorage.cs" />
     <Compile Include="XMLDataStorage.cs" />
+    <Compile Include="TaskEditor.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>

@@ -1,5 +1,5 @@
 ﻿//
-//  MainWindow_TaskEditor.cs
+//  TaskEditor.cs
 //
 //  Author:
 //       Marcin Kolny <marcin.kolny@gmail.com>
@@ -25,11 +25,11 @@ using UI = Gtk.Builder.ObjectAttribute;
 
 namespace LoganekPlaner
 {
-    internal partial class MainWindow
+    public class TaskEditor
     {
         [UI] readonly ComboBoxText priorityComboBoxText;
-        [UI] Button deadlineButton;
-        [UI] CheckButton noDeadlineCheckButton;
+        [UI] readonly Button deadlineButton;
+        [UI] readonly CheckButton noDeadlineCheckButton;
         [UI] readonly TextView descriptionTextView;
         [UI] readonly Entry taskTitleEntry;
         [UI] readonly Button saveTaskButton;
@@ -37,8 +37,25 @@ namespace LoganekPlaner
 
         readonly Calendar calendar = new Calendar ();
 
-        void InitTaskEditor ()
+        Task currentTask;
+
+        public void SetCurrentTask (Task task)
         {
+            currentTask = task;
+
+            if (task == null) {
+                removeTaskButton.Sensitive = false;
+                saveTaskButton.Label = "Add new task";
+            } else {
+                removeTaskButton.Sensitive = true;
+                saveTaskButton.Label = "Save";
+            }
+        }
+
+        public TaskEditor (Builder builder)
+        {
+            builder.Autoconnect (this);
+
             deadlineButton.Clicked += DeadlineButton_Clicked;;
             deadlineButton.Label = DateTime.Now.ToShortDateString ();
 
@@ -56,9 +73,8 @@ namespace LoganekPlaner
             if (currentTask == null) {
                 SetCurrentTask (new Task ());
             }
-
             if (string.IsNullOrEmpty (taskTitleEntry.Text)) {
-                var dialog = new MessageDialog (this, DialogFlags.Modal, MessageType.Error, ButtonsType.Ok, "Title cannot be empty");
+                var dialog = new MessageDialog (null, DialogFlags.Modal, MessageType.Error, ButtonsType.Ok, "Title cannot be empty");
                 dialog.Run ();
                 dialog.Destroy ();
                 return;
@@ -93,7 +109,7 @@ namespace LoganekPlaner
 
         void DeadlineButton_Clicked (object sender, EventArgs e)
         {
-            var dialog = new Dialog ("Sample", this, DialogFlags.DestroyWithParent);
+            var dialog = new Dialog ("Sample", null, DialogFlags.DestroyWithParent);
             dialog.Modal = true;
             dialog.AddButton ("Cancel", ResponseType.Cancel);
             dialog.AddButton ("OK", ResponseType.Ok);
@@ -117,7 +133,7 @@ namespace LoganekPlaner
             }
         }
 
-        void LoadCurrentTaskToEditor ()
+        public void LoadTask ()
         {
             if (currentTask == null) {
                 calendar.Date = DateTime.Now;
@@ -136,6 +152,7 @@ namespace LoganekPlaner
                 priorityComboBoxText.Active = (int)currentTask.Priority;
             }
 
+            taskTitleEntry.GrabFocus ();
             deadlineButton.Label = calendar.Date.ToShortDateString ();
         }
     }

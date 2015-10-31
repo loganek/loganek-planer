@@ -74,7 +74,7 @@ namespace LoganekPlaner
             tasksTreeView.Selection.GetSelected (out iter);
 
             SetCurrentTask (iter.UserData == IntPtr.Zero ? null : (Task)filter.GetValue (iter, 0));
-            LoadCurrentTaskToEditor ();
+            taskEditor.LoadTask ();
         }
 
         bool TasksTreeFilterFunc (ITreeModel model, TreeIter iter)

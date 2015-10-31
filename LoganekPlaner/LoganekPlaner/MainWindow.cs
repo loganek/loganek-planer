@@ -36,6 +36,8 @@ namespace LoganekPlaner
         [UI] readonly RadioToolButton noDeadlineToolButton;
         [UI] readonly Button saveToFileButton;
 
+        TaskEditor taskEditor;
+
         Task currentTask;
 
         ProcessTaskFunc currentFilterFunc;
@@ -43,6 +45,8 @@ namespace LoganekPlaner
         public MainWindow (Builder builder) : base (builder.GetObject ("mainWindow").Handle)
         {
             builder.Autoconnect (this);
+
+            taskEditor = new TaskEditor (builder);
 
             Destroyed += (sender, e) => Application.Quit ();
 
@@ -66,8 +70,6 @@ namespace LoganekPlaner
             saveToFileButton.Clicked += (sender, e) => TaskManager.Instance.SaveModel ();
 
             InitTaskTree ();
-
-            InitTaskEditor ();
 
             TaskManager.Instance.TaskChanged += TaskChanged;
             TaskManager.Instance.ModelStateModified += TaskManager_Instance_ModelStateModified;
@@ -166,21 +168,14 @@ namespace LoganekPlaner
         {
             currentTask = task;
 
-            if (task == null) {
-                removeTaskButton.Sensitive = false;
-                saveTaskButton.Label = "Add new task";
-            } else {
-                removeTaskButton.Sensitive = true;
-                saveTaskButton.Label = "Save";
-            }
+            taskEditor.SetCurrentTask (task);
         }
 
         void AddNewTaskButton_Clicked (object sender, EventArgs args)
         {
-            SetCurrentTask (null);
+            SetCurrentTask (new Task());
             tasksTreeView.Selection.UnselectAll ();
-            taskTitleEntry.GrabFocus ();
-            LoadCurrentTaskToEditor ();
+            taskEditor.LoadTask ();
         }
 
 
@@ -193,7 +188,7 @@ namespace LoganekPlaner
                 tasksTreeView.Selection.SelectIter (iter);
             } else {
                 SetCurrentTask (task);
-                LoadCurrentTaskToEditor ();
+                taskEditor.LoadTask ();
             }
         }
 

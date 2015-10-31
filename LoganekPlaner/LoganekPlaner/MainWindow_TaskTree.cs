@@ -33,11 +33,13 @@ namespace LoganekPlaner
         [UI] Button addNewTaskButton;
         [UI] readonly Button removeDoneButton;
         [UI] readonly TreeView tasksTreeView;
+        [UI] readonly Button searchTaskButton;
+        [UI] readonly Entry searchTaskEntry;
 
         readonly ListStore tasksList = new ListStore (typeof(Task), typeof(bool), typeof(string), typeof(string), typeof(string));
         TreeModelFilter filter;
 
-        void InitTaskTree()
+        void InitTaskTree ()
         {
             filter = new TreeModelFilter (tasksList, null);
             filter.VisibleFunc = TasksTreeFilterFunc;
@@ -48,6 +50,10 @@ namespace LoganekPlaner
             removeDoneButton.Clicked += RemoveDoneButton_Clicked;
 
             showDoneCheckButton.Toggled += (sender, e) => filter.Refilter ();
+
+            searchTaskButton.Clicked += (sender, e) => filter.Refilter ();
+
+            searchTaskEntry.Activated += (sender, e) => filter.Refilter ();
         }
 
         void AddColumn (string title, CellRenderer cellRenderer, TreeCellDataFunc func, Array attributes)
@@ -62,16 +68,16 @@ namespace LoganekPlaner
             tasksTreeView.AppendColumn (column);
         }
 
-        void TasksTreeView_Selection_Changed(object o, EventArgs args)
+        void TasksTreeView_Selection_Changed (object o, EventArgs args)
         {
             TreeIter iter;
             tasksTreeView.Selection.GetSelected (out iter);
 
-            SetCurrentTask (iter.UserData == IntPtr.Zero ? null :(Task)filter.GetValue (iter, 0));
+            SetCurrentTask (iter.UserData == IntPtr.Zero ? null : (Task)filter.GetValue (iter, 0));
             LoadCurrentTaskToEditor ();
         }
 
-        bool TasksTreeFilterFunc(ITreeModel model, TreeIter iter)
+        bool TasksTreeFilterFunc (ITreeModel model, TreeIter iter)
         {
             var task = model.GetValue (iter, 0) as Task;
             if (task == null) {
@@ -82,6 +88,12 @@ namespace LoganekPlaner
 
             if (currentFilterFunc != null)
                 ok &= currentFilterFunc (task);
+
+            string searchText = searchTaskEntry.Text;
+            if (!string.IsNullOrEmpty (searchText)) {
+                ok &= task.Description.IndexOf (searchText, StringComparison.OrdinalIgnoreCase) >= 0 ||
+                    task.Title.IndexOf (searchText, StringComparison.OrdinalIgnoreCase) >= 0;
+            }
 
             return ok;
         }

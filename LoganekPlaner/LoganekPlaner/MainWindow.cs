@@ -84,10 +84,10 @@ namespace LoganekPlaner
 
             ProcessTaskFunc[] filterFuncs = {
                 task => true,
-                task => task.DueDate.Date == DateTime.Now.Date,
-                task => task.DueDate.Date >= DateTime.Now.Date && task.DueDate.Date < DateTime.Now.Date.AddDays (7),
-                task => task.DueDate.Date < DateTime.Now.Date,
-                task => task.DueDate.Date == DateTime.Now.Date, // todo
+                task => task.Deadline.HasValue && task.Deadline.Value.Date == DateTime.Now.Date,
+                task => task.Deadline.HasValue && task.Deadline.Value.Date >= DateTime.Now.Date && task.Deadline.Value.Date < DateTime.Now.Date.AddDays (7),
+                task => task.Deadline.HasValue && task.Deadline.Value.Date < DateTime.Now.Date,
+                task => !task.Deadline.HasValue
             };
 
             foreach (var btn in filterButtons) {
@@ -156,7 +156,8 @@ namespace LoganekPlaner
             if (t == task) {
                 tasksList.SetValue (iter, 1, t.IsDone);
                 tasksList.SetValue (iter, 2, t.Title);
-                tasksList.SetValue (iter, 3, t.DueDate.ToShortDateString ());
+                tasksList.SetValue (iter, 3, 
+                    t.Deadline.HasValue ? t.Deadline.Value.ToShortDateString () : "infinity");
                 tasksList.SetValue (iter, 4, t.Priority.ToString ());
             }
         }
@@ -185,7 +186,7 @@ namespace LoganekPlaner
 
         void AppendTask (Task task)
         {
-            tasksList.AppendValues (task, task.IsDone, task.Title, task.DueDate.ToShortDateString (), task.Priority.ToString ());
+            tasksList.AppendValues (task, task.IsDone, task.Title, task.Deadline.HasValue ? task.Deadline.Value.ToShortDateString () : "infinity", task.Priority.ToString ());
             var iter = FindTask (task, filter);
 
             if (!iter.Equals (TreeIter.Zero)) {

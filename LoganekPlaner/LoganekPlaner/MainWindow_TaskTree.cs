@@ -146,12 +146,17 @@ namespace LoganekPlaner
             } else {
                 textCell.Strikethrough = false;
                 var now = DateTime.Now.Date;
-                var threshold = t.DueDate.AddDays (-1);
 
-                if (now > t.DueDate) {
-                    textCell.Background = "red";
-                } else if (now > threshold) {
-                    textCell.Background = "lightgreen";
+                if (t.Deadline.HasValue) {
+                    var threshold = t.Deadline.Value.AddDays (-1);
+
+                    if (now > t.Deadline.Value) {
+                        textCell.Background = "red";
+                    } else if (now > threshold) {
+                        textCell.Background = "lightgreen";
+                    } else {
+                        ResetColors ();
+                    } 
                 } else {
                     ResetColors ();
                 }

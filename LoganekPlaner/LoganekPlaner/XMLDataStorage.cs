@@ -41,6 +41,7 @@ namespace LoganekPlaner
         {
             DataSet ds = new DataSet ();
             var dt = new DataTable ();
+
             dt.Columns.Add (new DataColumn ("Task_Deadline", Type.GetType ("System.DateTime")));
             dt.Columns.Add (new DataColumn ("Task_CreateDate", Type.GetType ("System.DateTime")));
             dt.Columns.Add (new DataColumn ("Task_Title", Type.GetType ("System.String")));
@@ -53,7 +54,13 @@ namespace LoganekPlaner
             foreach (var task in tasks) {
                 DataRow dr;
                 dr = dt.NewRow ();
-                dr ["Task_Deadline"] = task.DueDate;
+
+                if (task.Deadline.HasValue) {
+                    dr ["Task_Deadline"] = task.Deadline;
+                } else {
+                    dr ["Task_Deadline"] = DBNull.Value;
+                }
+
                 dr ["Task_CreateDate"] = task.CreateDate;
                 dr ["Task_Title"] = task.Title;
                 dr ["Task_Description"] = task.Description;
@@ -85,14 +92,19 @@ namespace LoganekPlaner
             }
 
             foreach (var row in ds.Tables [0].AsEnumerable ()) {
-                tasks.Add (new Task {
-                    DueDate = DateTime.Parse(row ["Task_Deadline"].ToString ()),
+                var task = new Task {
                     CreateDate = DateTime.Parse (row ["Task_CreateDate"].ToString ()),
                     Description = row ["Task_Description"].ToString (),
                     Title = row ["Task_Title"].ToString (),
                     IsDone = Boolean.Parse (row ["Task_IsDone"].ToString ()),
                     Priority = (Priority) Int32.Parse (row ["Task_Priority"].ToString ())
-                });
+                };
+                if (row ["Task_Deadline"] is DBNull) {
+                    task.Deadline = null;
+                } else {
+                    task.Deadline = DateTime.Parse(row ["Task_Deadline"].ToString ());
+                }
+                tasks.Add (task);
             }
 
             return tasks;

@@ -31,7 +31,7 @@ namespace LoganekPlaner
 
     public class Task
     {
-        public DateTime DueDate { get; set; }
+        public DateTime? Deadline { get; set; }
 
         public DateTime CreateDate { get; set; }
 

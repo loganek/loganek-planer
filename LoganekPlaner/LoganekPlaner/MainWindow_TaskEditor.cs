@@ -71,7 +71,11 @@ namespace LoganekPlaner
                 return;
             }
 
-            currentTask.DueDate = calendar.Date;
+            if (noDeadlineCheckButton.Active) {
+                currentTask.Deadline = null;
+            } else {
+                currentTask.Deadline = calendar.Date;
+            }
             currentTask.CreateDate = DateTime.Now;
             currentTask.Description = descriptionTextView.Buffer.Text;
             currentTask.Priority = priority;
@@ -121,7 +125,12 @@ namespace LoganekPlaner
                 descriptionTextView.Buffer.Text = string.Empty;
                 priorityComboBoxText.Active = 0;
             } else {
-                calendar.Date = currentTask.DueDate;
+                if (currentTask.Deadline.HasValue) {
+                    calendar.Date = currentTask.Deadline.Value;
+                    noDeadlineCheckButton.Active = false;
+                } else {
+                    noDeadlineCheckButton.Active = true;
+                }
                 taskTitleEntry.Text = currentTask.Title;
                 descriptionTextView.Buffer.Text = currentTask.Description;
                 priorityComboBoxText.Active = (int)currentTask.Priority;

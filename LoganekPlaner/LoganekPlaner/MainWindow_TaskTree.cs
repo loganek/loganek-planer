@@ -89,7 +89,7 @@ namespace LoganekPlaner
         void RemoveDoneButton_Clicked (object sender, EventArgs e)
         {
             var tasksToRemove = new List<Task> ();
-            if (UiUtils.ShowConfirmationDialog (this, "Are you sure?") == ResponseType.Yes) {
+            if (UiUtils.ShowYesNoDialog (this, "Are you sure?") == ResponseType.Yes) {
                 TreeIter iter;
                 filter.GetIterFirst (out iter);
                 if (iter.Equals (TreeIter.Zero)) {
@@ -117,6 +117,7 @@ namespace LoganekPlaner
                     var t = (Task)filter.GetValue (iter, 0);
                     t.IsDone = !t.IsDone;
                     tasksList.SetValue (FindTask (t, tasksList), 1, t.IsDone); // NotImplementedException workaround
+                    TaskManager.Instance.AddTask (t);
                 }
             };
 

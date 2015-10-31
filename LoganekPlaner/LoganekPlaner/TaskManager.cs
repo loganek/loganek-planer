@@ -42,6 +42,16 @@ namespace LoganekPlaner
         public TaskStatus Status { get; private set; }
     }
 
+    public class ModelStateEventArgs : EventArgs
+    {
+        public ModelStateEventArgs (bool modified)
+        {
+            Modified = modified;
+        }
+
+        public bool Modified { get; private set; }
+    }
+
     public sealed class TaskManager
     {
         static volatile TaskManager instance;
@@ -49,10 +59,17 @@ namespace LoganekPlaner
 
         readonly List<Task> tasks = new List<Task> ();
 
+        public bool ModelModified { get; private set; }
+
+        readonly IDataStorage dataStorage;
+
         public event EventHandler<TaskEventArgs> TaskChanged;
+        public event EventHandler<ModelStateEventArgs> ModelStateModified;
 
         private TaskManager ()
         {
+            dataStorage = new XMLDataStorage (); 
+            dataStorage.LoadTasks ();
         }
 
         public void AddTask (Task task)
@@ -62,6 +79,7 @@ namespace LoganekPlaner
                 tasks.Add (task);
             }
             OnTaskChanged (task, taskExists ? TaskStatus.Update : TaskStatus.Add);
+            OnModelStateModified (true);
         }
 
         public void RemoveTask (Task task)
@@ -69,6 +87,7 @@ namespace LoganekPlaner
             if (tasks.Exists (t => t == task)) {
                 tasks.Remove (task);
                 OnTaskChanged (task, TaskStatus.Remove);
+                OnModelStateModified (true);
             }
         }
 
@@ -76,6 +95,15 @@ namespace LoganekPlaner
         {
             if (TaskChanged != null) {
                 TaskChanged (this, new TaskEventArgs (task, status));
+            }
+        }
+
+        private void OnModelStateModified (bool modified)
+        {
+            ModelModified = modified;
+
+            if (ModelStateModified != null) {
+                ModelStateModified (this, new ModelStateEventArgs (modified));
             }
         }
 
@@ -90,6 +118,20 @@ namespace LoganekPlaner
 
                 return instance;
             }
+        }
+
+        public void SaveModel ()
+        {
+            dataStorage.SaveTasks (tasks);
+            OnModelStateModified (false);
+        }
+
+        public void LoadModel ()
+        {
+            foreach (var task in dataStorage.LoadTasks ()) {
+                AddTask (task);
+            }
+            OnModelStateModified (false);
         }
     }
 }

@@ -76,7 +76,6 @@ namespace LoganekPlaner
             currentTask.Description = descriptionTextView.Buffer.Text;
             currentTask.Priority = priority;
             currentTask.Title = taskTitleEntry.Text;
-            currentTask.IsDone = false;
 
             TaskManager.Instance.AddTask (currentTask);
         }

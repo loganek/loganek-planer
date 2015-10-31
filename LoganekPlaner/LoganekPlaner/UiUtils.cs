@@ -24,9 +24,21 @@ namespace LoganekPlaner
 {
     public static class UiUtils
     {
-        public static ResponseType ShowConfirmationDialog (Window parent, string message)
+        public static ResponseType ShowYesNoDialog (Window parent, string message)
         {
             var dialog = new MessageDialog (parent, DialogFlags.Modal, MessageType.Question, ButtonsType.YesNo, message);
+            ResponseType ret = (ResponseType) dialog.Run ();
+            dialog.Destroy ();
+
+            return ret;
+        }
+
+        public static ResponseType ShowYesNoCancelDialog (Window parent, string message)
+        {
+            var dialog = new MessageDialog (parent, DialogFlags.Modal, MessageType.Question, ButtonsType.None, message);
+            dialog.AddButton ("Close without Saving", (int) ResponseType.No);
+            dialog.AddButton ("Cancel", (int) ResponseType.Cancel);
+            dialog.AddButton ("Save", (int) ResponseType.Yes);
             ResponseType ret = (ResponseType) dialog.Run ();
             dialog.Destroy ();
 

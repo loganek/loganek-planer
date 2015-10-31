@@ -34,6 +34,7 @@ namespace LoganekPlaner
         [UI] readonly RadioToolButton thisWeekToolButton;
         [UI] readonly RadioToolButton expiredToolButton;
         [UI] readonly RadioToolButton noDeadlineToolButton;
+        [UI] readonly Button saveToFileButton;
 
         Task currentTask;
 
@@ -45,15 +46,31 @@ namespace LoganekPlaner
 
             Destroyed += (sender, e) => Application.Quit ();
 
+            DeleteEvent += (o, args) => {
+                if (TaskManager.Instance.ModelModified) {
+                    switch (UiUtils.ShowYesNoCancelDialog (this, "Save changes?")) {
+                    case ResponseType.Yes:
+                        TaskManager.Instance.SaveModel ();
+                        break;
+                    case ResponseType.Cancel:
+                        args.RetVal = true;
+                        break;
+                    }
+                }
+            };
+
             InitTasksList ();
 
             addNewTaskButton.Clicked += AddNewTaskButton_Clicked;
+
+            saveToFileButton.Clicked += (sender, e) => TaskManager.Instance.SaveModel ();
 
             InitTaskTree ();
 
             InitTaskEditor ();
 
             TaskManager.Instance.TaskChanged += TaskChanged;
+            TaskManager.Instance.ModelStateModified += TaskManager_Instance_ModelStateModified;
 
             SetCurrentTask (null);
 
@@ -83,42 +100,16 @@ namespace LoganekPlaner
                 };
             }
 
-            TaskManager.Instance.AddTask (new Task {
-                Title = "title1",
-                DueDate = DateTime.Now,
-                IsDone = true,
-                Description = "Description"
-            });
-            TaskManager.Instance.AddTask (new Task {
-                Title = "title2",
-                DueDate = DateTime.Now.AddDays (10),
-                IsDone = false,
-                Description = "Description"
-            });
-            TaskManager.Instance.AddTask (new Task {
-                Title = "title3",
-                DueDate = DateTime.Now.AddDays (1),
-                IsDone = true,
-                Description = "Description"
-            });
-            TaskManager.Instance.AddTask (new Task {
-                Title = "title4",
-                DueDate = DateTime.Now,
-                IsDone = true,
-                Description = "Description"
-            });
-            TaskManager.Instance.AddTask (new Task {
-                Title = "title5",
-                DueDate = DateTime.Now.AddDays (-2),
-                IsDone = false,
-                Description = "Description"
-            });
-            TaskManager.Instance.AddTask (new Task {
-                Title = "title6",
-                DueDate = DateTime.Now.AddDays (4),
-                IsDone = true,
-                Description = "Description"
-            });
+            TaskManager.Instance.LoadModel ();
+        }
+
+        void TaskManager_Instance_ModelStateModified (object sender, ModelStateEventArgs e)
+        {
+            saveToFileButton.Label = "Save to file";
+
+            if (e.Modified) {
+                saveToFileButton.Label += "*";
+            }
         }
 
         void TaskChanged (object sender, TaskEventArgs e)

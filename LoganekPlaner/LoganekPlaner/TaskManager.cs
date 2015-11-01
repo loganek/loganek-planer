@@ -91,6 +91,11 @@ namespace LoganekPlaner
             }
         }
 
+        public void RemoveTasks (Predicate<Task> predicate)
+        {
+            tasks.RemoveAll (predicate);
+        }
+
         private void OnTaskChanged (Task task, TaskStatus status)
         {
             if (TaskChanged != null) {

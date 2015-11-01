@@ -25,9 +25,7 @@ using UI = Gtk.Builder.ObjectAttribute;
 
 namespace LoganekPlaner
 {
-    public delegate bool ProcessTaskFunc (Task task);
-
-    internal partial class MainWindow : Window
+    class MainWindow : Window
     {
         [UI] readonly RadioToolButton allTasksToolButton;
         [UI] readonly RadioToolButton todaysTasksToolButton;
@@ -35,18 +33,23 @@ namespace LoganekPlaner
         [UI] readonly RadioToolButton expiredToolButton;
         [UI] readonly RadioToolButton noDeadlineToolButton;
         [UI] readonly Button saveToFileButton;
+        [UI] readonly Button addNewTaskButton;
+        [UI] readonly Button removeDoneButton;
 
-        TaskEditor taskEditor;
-
-        Task currentTask;
-
-        ProcessTaskFunc currentFilterFunc;
+        readonly TaskEditor taskEditor;
+        readonly TaskTree taskTree;
 
         public MainWindow (Builder builder) : base (builder.GetObject ("mainWindow").Handle)
         {
             builder.Autoconnect (this);
 
             taskEditor = new TaskEditor (builder);
+            taskTree = new TaskTree (builder);
+
+            taskTree.SelectedTaskChanged += (sender, e) => {
+                taskEditor.SetCurrentTask (e);
+                taskEditor.LoadTask ();
+            };
 
             Destroyed += (sender, e) => Application.Quit ();
 
@@ -63,18 +66,15 @@ namespace LoganekPlaner
                 }
             };
 
-            InitTasksList ();
+            removeDoneButton.Clicked += (sender, e) => TaskManager.Instance.RemoveTasks (task => task.IsDone);
 
             addNewTaskButton.Clicked += AddNewTaskButton_Clicked;
 
             saveToFileButton.Clicked += (sender, e) => TaskManager.Instance.SaveModel ();
 
-            InitTaskTree ();
-
-            TaskManager.Instance.TaskChanged += TaskChanged;
             TaskManager.Instance.ModelStateModified += TaskManager_Instance_ModelStateModified;
 
-            SetCurrentTask (null);
+            taskEditor.SetCurrentTask (null);
 
             RadioToolButton[] filterButtons = {
                 allTasksToolButton,
@@ -94,11 +94,10 @@ namespace LoganekPlaner
 
             foreach (var btn in filterButtons) {
                 btn.Toggled += (sender, e) => {
-                    int index = Array.IndexOf (filterButtons, sender);
                     if ((sender as RadioToolButton).Active) {
-                        currentFilterFunc = filterFuncs [index];
+                        int index = Array.IndexOf (filterButtons, sender);
+                        taskTree.SetFilterFunc (filterFuncs [index]);
                     }
-                    filter.Refilter ();
                 };
             }
 
@@ -114,97 +113,10 @@ namespace LoganekPlaner
             }
         }
 
-        void TaskChanged (object sender, TaskEventArgs e)
-        {
-            switch (e.Status) {
-            case TaskStatus.Update:
-                UpdateTask (e.Task);
-                break;
-            case TaskStatus.Add:
-                AppendTask (e.Task);
-                break;
-            case TaskStatus.Remove:
-                RemoveTask (e.Task);
-                break;
-            }
-        }
-
-        static TreeIter FindTask (object task, ITreeModel model)
-        {
-            TreeIter iter;
-            model.GetIterFirst (out iter);
-
-            if (iter.Equals (TreeIter.Zero)) {
-                return TreeIter.Zero;
-            }
-
-            do {
-                if (model.GetValue (iter, 0) == task) {
-                    return iter;
-                }
-            } while (model.IterNext (ref iter)); 
-
-            return TreeIter.Zero;
-        }
-
-        void UpdateTask (Task task)
-        {
-            TreeIter iter = FindTask (task, tasksList);
-            if (iter.Equals (TreeIter.Zero)) {
-                return;
-            }
-
-            var t = (Task)tasksList.GetValue (iter, 0);
-            if (t == task) {
-                tasksList.SetValue (iter, 1, t.IsDone);
-                tasksList.SetValue (iter, 2, t.Title);
-                tasksList.SetValue (iter, 3, 
-                    t.Deadline.HasValue ? t.Deadline.Value.ToShortDateString () : "infinity");
-                tasksList.SetValue (iter, 4, t.Priority.ToString ());
-            }
-        }
-
-        void SetCurrentTask (Task task)
-        {
-            currentTask = task;
-
-            taskEditor.SetCurrentTask (task);
-        }
-
         void AddNewTaskButton_Clicked (object sender, EventArgs args)
         {
-            SetCurrentTask (new Task());
-            tasksTreeView.Selection.UnselectAll ();
+            taskEditor.SetCurrentTask (null);
             taskEditor.LoadTask ();
-        }
-
-
-        void AppendTask (Task task)
-        {
-            tasksList.AppendValues (task, task.IsDone, task.Title, task.Deadline.HasValue ? task.Deadline.Value.ToShortDateString () : "infinity", task.Priority.ToString ());
-            var iter = FindTask (task, filter);
-
-            if (!iter.Equals (TreeIter.Zero)) {
-                tasksTreeView.Selection.SelectIter (iter);
-            } else {
-                SetCurrentTask (task);
-                taskEditor.LoadTask ();
-            }
-        }
-
-        void RemoveTask (Task task)
-        {
-            TreeIter iter = FindTask (task, tasksList);
-
-            if (iter.Equals (TreeIter.Zero)) {
-                return;
-            }
-
-            tasksList.Remove (ref iter);
-
-            if (task == currentTask) {
-                SetCurrentTask (null);
-            }
         }
     }
 }
